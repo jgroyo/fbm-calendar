@@ -463,7 +463,8 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     horas en refrescar).
   </div>
 
-  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es.</footer>
+  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es.<br>
+  ¿Dudas? Lee la <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía para suscribirse</a>.</footer>
 
   <script>
   function copiarUrl(btn) {{
