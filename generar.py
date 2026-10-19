@@ -163,7 +163,51 @@ def extraer_partidos(html: str) -> list[Partido]:
                     direccion=" ".join(campo_lineas[1:]) if len(campo_lineas) > 1 else "",
                 )
             )
+
+    # Salvaguarda: completar la hora desde 'Próximos partidos' cuando el
+    # CALENDARIO aún no la tenga para un partido inminente. La fuente sigue
+    # siendo el calendario; próximos solo aporta la hora que falte.
+    _completar_horas_desde_proximos(soup, partidos)
     return partidos
+
+
+def _horas_proximos(soup: BeautifulSoup) -> dict:
+    """Mapa {(dd/mm/aaaa, local_norm, visitante_norm): (hh, mm)} con las horas
+    reales publicadas en la sección 'Próximos partidos'."""
+    horas: dict = {}
+    cont = soup.find("div", id="proximosPartidos")
+    if cont is None:
+        return horas
+    tabla = cont.find("table")
+    if tabla is None:
+        return horas
+    for tr in tabla.find_all("tr"):
+        celdas = tr.find_all("td")
+        if len(celdas) != 4:
+            continue
+        enc = _celda_lineas(celdas[1])
+        if len(enc) < 2:
+            continue
+        inicio, tiene_hora = _parse_fecha(celdas[2].get_text(" ", strip=True))
+        if inicio is None or not tiene_hora:
+            continue
+        clave = (inicio.strftime("%d/%m/%Y"), _normaliza(enc[0]), _normaliza(enc[1]))
+        horas[clave] = (inicio.hour, inicio.minute)
+    return horas
+
+
+def _completar_horas_desde_proximos(soup: BeautifulSoup, partidos: list[Partido]) -> None:
+    horas = _horas_proximos(soup)
+    if not horas:
+        return
+    for p in partidos:
+        if p.inicio is None or p.tiene_hora:
+            continue
+        clave = (p.inicio.strftime("%d/%m/%Y"), _normaliza(p.local), _normaliza(p.visitante))
+        hm = horas.get(clave)
+        if hm:
+            p.inicio = p.inicio.replace(hour=hm[0], minute=hm[1])
+            p.tiene_hora = True
 
 
 def filtrar(partidos: list[Partido], equipo: Equipo) -> list[Partido]:
