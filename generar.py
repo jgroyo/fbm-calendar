@@ -476,6 +476,8 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
   .url code {{ background: #eef1ee; padding: .15rem .35rem; border-radius: 4px; }}
   footer {{ margin-top: 2rem; color: #777; font-size: .85rem; text-align: center; }}
   footer a {{ color: var(--brand); }}
+  .disclaimer {{ margin: .8rem auto 0; max-width: 620px; font-size: .78rem;
+                color: #999; line-height: 1.45; }}
   .ayuda {{ background: #fff; border: 1px solid #e2e5e2; border-top: 4px solid var(--brand);
            border-radius: 10px; padding: 1rem 1.25rem; font-size: .92rem; color: #1a1a1a; }}
   .ayuda strong {{ color: var(--dark); }}
@@ -522,7 +524,12 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
   <h2 class="seccion">Elige tu equipo</h2>
   {''.join(filas)}
 
-  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}</footer>
+  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}
+  <p class="disclaimer">Página no oficial, de uso particular y sin relación con la
+  FBM ni con el club. Se ofrece «tal cual», sin soporte ni garantías: los datos
+  pueden tardar en actualizarse, contener errores o dejar de funcionar. Confirma
+  siempre horarios y cambios de última hora por los canales oficiales del club.
+  ¿Dudas? Lee la <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía para suscribirse</a>.</p></footer>
   </div>
 
   <script>
