@@ -47,13 +47,36 @@ class Partido:
     tiene_hora: bool
     pabellon: str
     direccion: str
+    pts_local: int | None = None       # resultado (si el partido ya se jugó)
+    pts_visitante: int | None = None
 
     def uid(self, equipo_id: str) -> str:
         base = f"{equipo_id}|{self.categoria}|{self.local}|{self.visitante}"
         h = hashlib.sha1(base.encode("utf-8")).hexdigest()[:16]
         return f"fbm-{h}@fbm-calendar"
 
-    def titulo(self, etiqueta: str) -> str:
+    def jugado(self) -> bool:
+        return self.pts_local is not None and self.pts_visitante is not None
+
+    def titulo(self, etiqueta: str, club_nombre_fbm: str = "") -> str:
+        if self.jugado():
+            # Resultado y marca de victoria/derrota desde el punto de vista del club.
+            icono = "🏀"
+            if club_nombre_fbm:
+                cn = _normaliza(club_nombre_fbm)
+                club_local = cn in _normaliza(self.local)
+                club_visit = cn in _normaliza(self.visitante)
+                if club_local or club_visit:
+                    pts_club = self.pts_local if club_local else self.pts_visitante
+                    pts_rival = self.pts_visitante if club_local else self.pts_local
+                    if pts_club > pts_rival:
+                        icono = "✅"
+                    elif pts_club < pts_rival:
+                        icono = "❌"
+                    else:
+                        icono = "🟰"
+            return (f"{icono} {etiqueta} · {self.local} {self.pts_local}"
+                    f"-{self.pts_visitante} {self.visitante}")
         return f"🏀 {etiqueta} · {self.local} vs {self.visitante}"
 
     def ubicacion(self) -> str:
@@ -152,6 +175,14 @@ def extraer_partidos(html: str) -> list[Partido]:
             fecha_txt = " ".join(fecha_lineas)
             inicio, tiene_hora = _parse_fecha(fecha_txt)
 
+            # Resultado: celdas 1 (local) y 2 (visitante) traen los puntos si el
+            # partido ya se jugó; están vacías si aún no.
+            def _puntos(celda):
+                t = celda.get_text(" ", strip=True)
+                return int(t) if t.isdigit() else None
+            pts_local = _puntos(celdas[1])
+            pts_visitante = _puntos(celdas[2])
+
             partidos.append(
                 Partido(
                     categoria=categoria,
@@ -161,6 +192,8 @@ def extraer_partidos(html: str) -> list[Partido]:
                     tiene_hora=tiene_hora,
                     pabellon=campo_lineas[0] if campo_lineas else "",
                     direccion=" ".join(campo_lineas[1:]) if len(campo_lineas) > 1 else "",
+                    pts_local=pts_local,
+                    pts_visitante=pts_visitante,
                 )
             )
 
@@ -250,13 +283,16 @@ def filtrar(partidos: list[Partido], equipo: Equipo) -> list[Partido]:
             continue
         candidatos.append(p)
 
-    # Deduplicar: misma fecha + mismo par de equipos -> preferir con hora.
+    # Deduplicar: misma fecha + mismo par de equipos -> preferir la fila con
+    # más información (resultado > hora).
+    def _rango(p: Partido) -> tuple:
+        return (p.jugado(), p.tiene_hora)
     mejor: dict[tuple, Partido] = {}
     for p in candidatos:
         dia = p.inicio.strftime("%Y%m%d") if p.inicio else "sinfecha"
         clave = (dia, _normaliza(p.local), _normaliza(p.visitante))
         actual = mejor.get(clave)
-        if actual is None or (p.tiene_hora and not actual.tiene_hora):
+        if actual is None or _rango(p) > _rango(actual):
             mejor[clave] = p
 
     seleccion = list(mejor.values())
@@ -312,7 +348,7 @@ def _temporada(partidos: list[Partido]) -> str:
     return f"{inicio % 100:02d}-{(inicio + 1) % 100:02d}"
 
 
-def generar_ics(equipo: Equipo, ajustes: dict) -> str:
+def generar_ics(equipo: Equipo, ajustes: dict, club_url: str = "") -> str:
     tzid = ajustes.get("tzid", "Europe/Madrid")
     dur = int(ajustes.get("duracion_minutos", 90))
     aviso = int(ajustes.get("aviso_horas_antes", 2))
@@ -347,14 +383,19 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
             fin = p.inicio + timedelta(days=1)
             lineas += [f"DTSTART;VALUE=DATE:{p.inicio.strftime('%Y%m%d')}",
                        f"DTEND;VALUE=DATE:{fin.strftime('%Y%m%d')}"]
-        lineas.append(f"SUMMARY:{_escapar(p.titulo(equipo.nombre))}")
+        lineas.append(f"SUMMARY:{_escapar(p.titulo(equipo.nombre, equipo.club_nombre_fbm))}")
         if p.ubicacion():
             lineas.append(f"LOCATION:{_escapar(p.ubicacion())}")
         desc = f"Categoría: {p.categoria}\nLocal: {p.local}\nVisitante: {p.visitante}"
-        if not p.tiene_hora:
+        if p.jugado():
+            desc += f"\nResultado: {p.local} {p.pts_local} - {p.pts_visitante} {p.visitante}"
+        elif not p.tiene_hora:
             desc += "\n(Hora aún no publicada por la FBM)"
+        if club_url:
+            desc += f"\n\nCalendario y clasificación del club: {club_url}"
         lineas.append(f"DESCRIPTION:{_escapar(desc)}")
-        if p.tiene_hora and aviso > 0:
+        # Aviso solo para partidos futuros con hora (no para los ya jugados).
+        if p.tiene_hora and aviso > 0 and not p.jugado():
             lineas += ["BEGIN:VALARM", "ACTION:DISPLAY",
                        "DESCRIPTION:Partido de baloncesto",
                        f"TRIGGER:-PT{aviso}H", "END:VALARM"]
@@ -635,7 +676,9 @@ def main() -> int:
         if todos is None:
             continue
         eq.partidos = filtrar(todos, eq)
-        ics = generar_ics(eq, ajustes)
+        club_cfg = clubes.get(eq.club, {}) or {}
+        club_url = FBM_URL.format(id=club_cfg["id"], slug=club_cfg["slug"]) if club_cfg else ""
+        ics = generar_ics(eq, ajustes, club_url)
         ruta = os.path.join(args.salida, f"{eq.id}.ics")
         with open(ruta, "w", encoding="utf-8") as f:
             f.write(ics)
