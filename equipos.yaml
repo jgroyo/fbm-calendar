@@ -174,3 +174,8 @@ ajustes:
   tzid: "Europe/Madrid"
   aviso_horas_antes: 2       # recordatorio antes del partido (0 = sin aviso)
   titulo_sitio: "Calendarios Patrocinio San José (FBM)"
+  # Marca para la página web (colores e imagen del club).
+  color_principal: "#007430"   # verde corporativo del club
+  color_oscuro: "#111111"
+  logo_url: "https://api.clupik.com/clubs/243/images/clubTransparent.png"
+  club_web: "https://www.patrobasket.es"

@@ -369,12 +369,17 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
 
 def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     titulo = ajustes.get("titulo_sitio", "Calendarios de baloncesto FBM")
+    color = ajustes.get("color_principal", "#c4242f")
+    color_oscuro = ajustes.get("color_oscuro", "#111111")
+    logo_url = ajustes.get("logo_url", "")
+    club_web = ajustes.get("club_web", "")
     # Temporada global (a partir de todos los partidos) para mostrarla en el
     # título del sitio.
     todos_partidos = [p for eq in equipos for p in eq.partidos]
     temporada_sitio = _temporada(todos_partidos)
+    subtitulo = "Partidos de la Federación de Baloncesto de Madrid, siempre al día."
     if temporada_sitio:
-        titulo = f"{titulo} · Temporada {temporada_sitio}"
+        subtitulo = f"Temporada {temporada_sitio} · " + subtitulo
     base = base_url.rstrip("/")
     filas = []
     for eq in equipos:
@@ -406,6 +411,14 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
           <p class="url">{url_txt}</p>
         </div>""")
 
+    logo_html = (
+        f'<img class="logo" src="{html_mod.escape(logo_url)}" alt="Escudo del club">'
+        if logo_url else ""
+    )
+    club_link = (
+        f'· <a href="{html_mod.escape(club_web)}">Web del club</a>' if club_web else ""
+    )
+
     actualizado = datetime.now().strftime("%d/%m/%Y %H:%M")
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -413,35 +426,52 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html_mod.escape(titulo)}</title>
+{f'<link rel="icon" href="{html_mod.escape(logo_url)}">' if logo_url else ""}
 <style>
+  :root {{ --brand: {color}; --dark: {color_oscuro}; }}
+  * {{ box-sizing: border-box; }}
   body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-         max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;
-         background: #ffffff; color: #1a1a1a; }}
-  h1 {{ font-size: 1.6rem; }}
-  .sub {{ color: #555; margin-top: -0.5rem; }}
-  .card {{ border: 1px solid #e0e0e0; border-radius: 12px; padding: 1rem 1.25rem;
-          margin: 1rem 0; box-shadow: 0 1px 3px rgba(0,0,0,.06); background: #fff; }}
-  .card h2 {{ margin: 0 0 .25rem; font-size: 1.15rem; color: #1a1a1a; }}
+         margin: 0; line-height: 1.5; background: #f4f5f4; color: #1a1a1a; }}
+  .hero {{ background: var(--dark); color: #fff; padding: 1.5rem 1rem 1.75rem;
+          text-align: center; border-bottom: 5px solid var(--brand); }}
+  .hero .logo {{ height: 92px; width: auto; margin-bottom: .6rem;
+          filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }}
+  .hero h1 {{ font-size: 1.4rem; margin: .2rem 0 .3rem; }}
+  .hero .sub {{ color: #cfd6d0; margin: 0; font-size: .92rem; }}
+  .wrap {{ max-width: 760px; margin: 0 auto; padding: 1.25rem 1rem 2.5rem; }}
+  .card {{ border: 1px solid #e2e5e2; border-left: 5px solid var(--brand);
+          border-radius: 12px; padding: 1rem 1.25rem; margin: 1rem 0;
+          box-shadow: 0 1px 3px rgba(0,0,0,.06); background: #fff; }}
+  .card h2 {{ margin: 0 0 .25rem; font-size: 1.12rem; color: var(--dark); }}
   .meta {{ color: #666; margin: 0 0 .75rem; font-size: .9rem; }}
   .acciones {{ display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }}
-  .btn {{ display: inline-block; background: #c4242f; color: #fff;
+  .btn {{ display: inline-block; background: var(--brand); color: #fff;
          text-decoration: none; padding: .5rem .9rem; border-radius: 8px;
-         font-size: .95rem; border: none; cursor: pointer; font-family: inherit; }}
-  .btn.apple {{ background: #0a84ff; }}
-  .btn.ghost {{ background: #fff; color: #c4242f; border: 1px solid #c4242f; }}
+         font-size: .95rem; border: none; cursor: pointer; font-family: inherit;
+         font-weight: 600; }}
+  .btn:hover {{ filter: brightness(1.08); }}
+  .btn.apple {{ background: var(--dark); }}
+  .btn.ghost {{ background: #fff; color: var(--brand); border: 1.5px solid var(--brand);
+         font-weight: 500; }}
   .btn.ghost.ok {{ color: #1a7f37; border-color: #1a7f37; }}
   .url {{ font-size: .8rem; color: #666; word-break: break-all; margin: .6rem 0 0; }}
-  .url code {{ background: #f2f2f2; padding: .15rem .35rem; border-radius: 4px; }}
-  footer {{ margin-top: 2rem; color: #777; font-size: .85rem; }}
-  .ayuda {{ background: #f4f6f8; border: 1px solid #e0e4e8; border-radius: 10px;
-           padding: 1rem 1.25rem; font-size: .92rem; color: #1a1a1a; }}
-  .ayuda strong {{ color: #111; }}
-  .ayuda code {{ background: #e7ebef; padding: .1rem .3rem; border-radius: 4px; }}
+  .url code {{ background: #eef1ee; padding: .15rem .35rem; border-radius: 4px; }}
+  footer {{ margin-top: 2rem; color: #777; font-size: .85rem; text-align: center; }}
+  footer a {{ color: var(--brand); }}
+  .ayuda {{ background: #fff; border: 1px solid #e2e5e2; border-top: 4px solid var(--brand);
+           border-radius: 10px; padding: 1rem 1.25rem; font-size: .92rem; color: #1a1a1a; }}
+  .ayuda strong {{ color: var(--dark); }}
+  .ayuda a {{ color: var(--brand); }}
+  .ayuda code {{ background: #eef1ee; padding: .1rem .3rem; border-radius: 4px; }}
 </style>
 </head>
 <body>
-  <h1>🏀 {html_mod.escape(titulo)}</h1>
-  <p class="sub">Partidos de la Federación de Baloncesto de Madrid, siempre al día.</p>
+  <header class="hero">
+    {logo_html}
+    <h1>{html_mod.escape(titulo)}</h1>
+    <p class="sub">{html_mod.escape(subtitulo)}</p>
+  </header>
+  <div class="wrap">
 
   {''.join(filas)}
 
@@ -463,8 +493,9 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     horas en refrescar).
   </div>
 
-  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es.<br>
+  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}<br>
   ¿Dudas? Lee la <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía para suscribirse</a>.</footer>
+  </div>
 
   <script>
   function copiarUrl(btn) {{
