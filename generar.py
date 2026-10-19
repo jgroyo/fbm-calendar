@@ -24,7 +24,6 @@ import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from urllib.parse import quote
 
 import requests
 import yaml
@@ -55,7 +54,7 @@ class Partido:
         return f"fbm-{h}@fbm-calendar"
 
     def titulo(self, etiqueta: str) -> str:
-        return f"🏀 {self.local} vs {self.visitante} ({etiqueta})"
+        return f"🏀 {etiqueta} · {self.local} vs {self.visitante}"
 
     def ubicacion(self) -> str:
         return ", ".join(p for p in (self.pabellon, self.direccion) if p)
@@ -301,16 +300,31 @@ def _vtimezone(tzid: str) -> list[str]:
     ]
 
 
+def _temporada(partidos: list[Partido]) -> str:
+    """Devuelve la temporada en formato 'AA-AA' (p.ej. '26-27') a partir de las
+    fechas de los partidos. La temporada se considera que empieza en verano: un
+    partido de sep-dic pertenece a 'año/año+1' y uno de ene-jun a 'año-1/año'."""
+    fechas = [p.inicio for p in partidos if p.inicio is not None]
+    if not fechas:
+        return ""
+    ref = min(fechas)
+    inicio = ref.year if ref.month >= 7 else ref.year - 1
+    return f"{inicio % 100:02d}-{(inicio + 1) % 100:02d}"
+
+
 def generar_ics(equipo: Equipo, ajustes: dict) -> str:
     tzid = ajustes.get("tzid", "Europe/Madrid")
     dur = int(ajustes.get("duracion_minutos", 90))
     aviso = int(ajustes.get("aviso_horas_antes", 2))
     ahora = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
 
+    temporada = _temporada(equipo.partidos)
+    nombre_cal = f"{equipo.nombre} {temporada}".strip() if temporada else equipo.nombre
+
     lineas = [
         "BEGIN:VCALENDAR", "VERSION:2.0",
         "PRODID:-//fbm-calendar//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
-        f"X-WR-CALNAME:{_escapar(equipo.nombre)}",
+        f"X-WR-CALNAME:{_escapar(nombre_cal)}",
         f"X-WR-TIMEZONE:{tzid}",
         *_vtimezone(tzid),
     ]
@@ -354,11 +368,13 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
         if base:
             https_url = f"{base}/{eq.id}.ics"
             webcal_url = re.sub(r"^https?://", "webcal://", https_url)
-            # Enlace oficial de Google para suscribirse por URL (no importar):
-            # abre el diálogo "Añadir calendario desde URL".
-            google_url = "https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=" + quote(https_url, safe="")
+            # Google no autorrellena de forma fiable la URL en el diálogo de
+            # "añadir desde URL", así que el botón copia la URL al portapapeles
+            # y luego abre Google: el usuario solo tiene que pegar.
+            google_url = "https://calendar.google.com/calendar/u/0/r/settings/addbyurl"
             botones = (
-                f'<a class="btn" href="{html_mod.escape(google_url)}" target="_blank" rel="noopener">Añadir a Google Calendar</a>'
+                f'<button class="btn" type="button" data-url="{html_mod.escape(https_url)}" '
+                f'data-google="{html_mod.escape(google_url)}" onclick="añadirGoogle(this)">Añadir a Google Calendar</button>'
                 f'<a class="btn apple" href="{html_mod.escape(webcal_url)}">Añadir a Apple / iPhone</a>'
                 f'<button class="btn ghost" type="button" data-url="{html_mod.escape(https_url)}" onclick="copiarUrl(this)">Copiar URL</button>'
             )
@@ -417,9 +433,9 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     <strong>¿Cómo suscribirse?</strong>
     <ul>
       <li><strong>Google Calendar</strong> (ordenador): pulsa «Añadir a Google
-          Calendar». Se abrirá Google pidiendo confirmar la suscripción <em>desde
-          URL</em>. Si no se abriera el diálogo, usa «Copiar URL» y pégala en
-          <em>Otros calendarios → Suscribirse a un calendario → Desde una URL</em>.</li>
+          Calendar». Se copia la URL automáticamente y se abre Google; solo tienes
+          que <em>pegar</em> (Ctrl/Cmd+V) en el campo «URL del calendario» y pulsar
+          «Añadir calendario».</li>
       <li><strong>iPhone / iPad / Mac:</strong> pulsa «Añadir a Apple / iPhone»
           (enlace <code>webcal://</code>) y confirma.</li>
       <li><strong>Android:</strong> suscríbete primero en Google Calendar desde un
@@ -446,6 +462,21 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
       navigator.clipboard.writeText(url).then(hecho).catch(() => prompt('Copia la URL:', url));
     }} else {{
       prompt('Copia la URL:', url);
+    }}
+  }}
+
+  function añadirGoogle(btn) {{
+    const url = btn.getAttribute('data-url');
+    const google = btn.getAttribute('data-google');
+    const abrir = () => window.open(google, '_blank', 'noopener');
+    if (navigator.clipboard && navigator.clipboard.writeText) {{
+      navigator.clipboard.writeText(url).then(() => {{
+        alert('URL copiada. Se abrirá Google Calendar: pega la URL (Ctrl/Cmd+V) en «URL del calendario» y pulsa «Añadir calendario».');
+        abrir();
+      }}).catch(() => {{ prompt('Copia esta URL y pégala en Google:', url); abrir(); }});
+    }} else {{
+      prompt('Copia esta URL y pégala en Google:', url);
+      abrir();
     }}
   }}
   </script>
