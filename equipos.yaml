@@ -1,0 +1,47 @@
+# Configuración de calendarios FBM
+# ---------------------------------
+# Para añadir un equipo nuevo, copia un bloque dentro de "equipos".
+#
+# Campos de cada equipo:
+#   id            Identificador corto y único. Será el nombre del fichero .ics
+#                 (p.ej. "alevin-masc" -> alevin-masc.ics). Usa solo letras,
+#                 números y guiones.
+#   nombre        Nombre visible en el calendario y en la página de índice.
+#   club          Clave de un club definido en la sección "clubes" de abajo.
+#   categoria     Prefijo de la categoría tal y como aparece en la web de la FBM,
+#                 sin distinguir mayúsculas ni acentos. Debe ser lo bastante
+#                 específico para no colar otras categorías.
+#                 Ejemplos: "cadete fem. 1", "alv mas 1", "infantil masc. 2".
+#   equipo_contiene  (opcional) Si el club tiene VARIOS equipos en esa categoría
+#                 (p.ej. VERDE y NEGRO), palabra que identifica al equipo
+#                 concreto. Déjalo vacío o quítalo si solo hay uno.
+
+# Clubes: cada uno con su ID numérico en la web de la FBM.
+# El ID se saca de la URL de la página del club:
+#   https://www.fbm.es/resultados-club-<ID>/<slug>
+clubes:
+  patrocinio-san-jose:
+    id: 6341
+    slug: patrocinio-san-jose-cb
+    nombre: Patrocinio San José C.B.
+
+# Equipos a seguir. Cada uno genera su propio fichero .ics.
+equipos:
+  - id: cadete-fem-1
+    nombre: "Cadete Femenino 1º año"
+    club: patrocinio-san-jose
+    categoria: "cadete fem. 1"
+    equipo_contiene: ""
+
+  - id: alevin-masc-1-negro
+    nombre: "Alevín Masculino 1º año (Negro)"
+    club: patrocinio-san-jose
+    categoria: "alv mas 1"
+    equipo_contiene: "NEGRO"
+
+# Ajustes generales del calendario.
+ajustes:
+  duracion_minutos: 90       # duración de cada partido (para la hora de fin)
+  tzid: "Europe/Madrid"
+  aviso_horas_antes: 2       # recordatorio antes del partido (0 = sin aviso)
+  titulo_sitio: "Calendarios de baloncesto FBM"

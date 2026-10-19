@@ -1,0 +1,13 @@
+# Salida generada localmente (en GitHub la produce el workflow)
+/public/
+
+# Artefactos del proyecto antiguo (script de un solo equipo)
+partidos.ics
+.partidos.ics.tmp
+fbm.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

@@ -1,0 +1,68 @@
+name: Actualizar calendarios FBM
+
+on:
+  # Ejecución manual desde la pestaña Actions.
+  workflow_dispatch:
+  # Programada: cada 6 horas (en punto). Hora en UTC.
+  schedule:
+    - cron: "0 */6 * * *"
+  # También al hacer push de cambios en la config o el script.
+  push:
+    branches: [main]
+    paths:
+      - "equipos.yaml"
+      - "generar.py"
+      - ".github/workflows/actualizar.yml"
+
+# Permisos necesarios para publicar en GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita ejecuciones solapadas; deja terminar la que esté en curso.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Generar calendarios
+        env:
+          # URL pública de GitHub Pages de este repo. ${{ steps.pages.outputs.base_url }}
+          # no está disponible aquí, así que la componemos a partir del contexto.
+          BASE_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+        run: python generar.py --salida public --base-url "$BASE_URL"
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artefacto
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Desplegar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
