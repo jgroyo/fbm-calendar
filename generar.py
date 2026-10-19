@@ -329,9 +329,11 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
         f"NAME:{_escapar(nombre_cal)}",
         f"X-WR-CALNAME:{_escapar(nombre_cal)}",
         f"X-WR-TIMEZONE:{tzid}",
-        # Sugerir a los clientes que refresquen el calendario cada 12 horas.
-        "REFRESH-INTERVAL;VALUE=DURATION:PT12H",
-        "X-PUBLISHED-TTL:PT12H",
+        # Sugerir a los clientes que refresquen el calendario cada hora. Es solo
+        # una sugerencia: Apple/Outlook la respetan; Google refresca a su ritmo
+        # (suele tardar varias horas) y la ignora en la práctica.
+        "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
+        "X-PUBLISHED-TTL:PT1H",
         *_vtimezone(tzid),
     ]
     for p in equipo.partidos:

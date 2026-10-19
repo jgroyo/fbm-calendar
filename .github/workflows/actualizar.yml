@@ -3,9 +3,9 @@ name: Actualizar calendarios FBM
 on:
   # Ejecución manual desde la pestaña Actions.
   workflow_dispatch:
-  # Programada: cada 6 horas (en punto). Hora en UTC.
+  # Programada: cada hora (en punto). Hora en UTC.
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 * * * *"
   # También al hacer push de cambios en la config o el script.
   push:
     branches: [main]

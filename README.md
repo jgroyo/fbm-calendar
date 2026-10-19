@@ -12,7 +12,7 @@ ordenador encendido.
 
 ## Cómo funciona
 
-1. Una acción programada (cada 6 h) raspa la página de cada club en la FBM.
+1. Una acción programada (cada hora) raspa la página de cada club en la FBM.
 2. `generar.py` lee la sección **CALENDARIO** de la web (la fuente completa y
    fiable: toda la liga del equipo, con aplazados y partidos entre semana),
    filtra los partidos de los equipos definidos en `equipos.yaml` y escribe un
@@ -76,7 +76,7 @@ Al hacer `git push`, la acción se ejecuta sola y actualiza los calendarios.
 
 3. **Lanza la primera ejecución:** repo → pestaña *Actions* →
    *Actualizar calendarios FBM* → *Run workflow*. (Luego se repetirá sola cada
-   6 h.)
+   hora.)
 
 4. Abre `https://<usuario>.github.io/fbm-calendar/` — verás la página con un
    botón de suscripción por equipo.
@@ -106,7 +106,7 @@ python3 generar.py --debug --base-url "https://<usuario>.github.io/fbm-calendar"
 
 ## Notas
 
-- La acción corre cada 6 horas (`cron: "0 */6 * * *"` en UTC). Ajusta esa línea
+- La acción corre cada hora (`cron: "0 * * * *"` en UTC). Ajusta esa línea
   en el workflow si quieres otra frecuencia.
 - Si la FBM está caída durante una ejecución, la acción simplemente no publica
   nada nuevo; la versión anterior en Pages se conserva hasta la siguiente.
