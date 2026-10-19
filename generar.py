@@ -118,6 +118,11 @@ def extraer_partidos(html: str) -> list[Partido]:
     if tabla is None:
         raise RuntimeError("No se encontró la tabla de próximos partidos.")
 
+    # Índice del CALENDARIO para corregir filas enmascaradas como "DESCANSA"
+    # (partidos aplazados/reprogramados que la sección de próximos muestra sin
+    # rival ni hora reales).
+    calendario = _indexar_calendario(soup)
+
     partidos: list[Partido] = []
     for fila in tabla.find_all("tr"):
         celdas = fila.find_all("td")
@@ -126,19 +131,111 @@ def extraer_partidos(html: str) -> list[Partido]:
         cat = " ".join(_celda_lineas(celdas[0]))
         enc = _celda_lineas(celdas[1])
         campo = _celda_lineas(celdas[3])
-        inicio, tiene_hora = _parse_fecha(celdas[2].get_text(" ", strip=True))
+        fecha_txt = celdas[2].get_text(" ", strip=True)
+        inicio, tiene_hora = _parse_fecha(fecha_txt)
+
+        local = enc[0] if enc else ""
+        visitante = enc[1] if len(enc) > 1 else ""
+        pabellon = campo[0] if campo else ""
+        direccion = " ".join(campo[1:]) if len(campo) > 1 else ""
+
+        # Enriquecer si un lado es DESCANSA pero el otro es un equipo del club:
+        # buscar el enfrentamiento real en el CALENDARIO por (equipo, fecha).
+        local, visitante, inicio, tiene_hora, pabellon, direccion = _reparar_descansa(
+            calendario, local, visitante, inicio, tiene_hora, pabellon, direccion
+        )
+
         partidos.append(
             Partido(
                 categoria=cat,
-                local=enc[0] if enc else "",
-                visitante=enc[1] if len(enc) > 1 else "",
+                local=local,
+                visitante=visitante,
                 inicio=inicio,
                 tiene_hora=tiene_hora,
-                pabellon=campo[0] if campo else "",
-                direccion=" ".join(campo[1:]) if len(campo) > 1 else "",
+                pabellon=pabellon,
+                direccion=direccion,
             )
         )
     return partidos
+
+
+def _indexar_calendario(soup: BeautifulSoup) -> dict:
+    """Construye un índice de los partidos del CALENDARIO que involucran a un
+    equipo cuyo nombre contiene 'patrocinio san jose' (o cualquier equipo
+    local), clave = (nombre_equipo_normalizado, 'dd/mm/aaaa').
+
+    Prefiere la fila con rival REAL y hora sobre las filas de descanso, de modo
+    que un partido aplazado reprogramado gane a la ranura 'DESCANSA' del mismo
+    día.
+    """
+    cal = soup.find("div", id="calendarios")
+    index: dict = {}
+    if cal is None:
+        return index
+
+    for tr in cal.find_all("tr"):
+        celdas = tr.find_all("td")
+        if len(celdas) != 6:
+            continue
+        local = celdas[0].get_text(" ", strip=True)
+        visitante = celdas[3].get_text(" ", strip=True)
+        fecha_lineas = _celda_lineas(celdas[4])
+        campo_lineas = _celda_lineas(celdas[5])
+        fecha = fecha_lineas[0] if fecha_lineas else ""
+        hora = fecha_lineas[1] if len(fecha_lineas) > 1 else ""
+        if not fecha:
+            continue
+
+        es_descanso = "descansa" in _normaliza(local) or "descansa" in _normaliza(visitante)
+        for lado in (local, visitante):
+            if "descansa" in _normaliza(lado):
+                continue
+            clave = (_normaliza(lado), fecha)
+            registro = {
+                "local": local,
+                "visitante": visitante,
+                "fecha": fecha,
+                "hora": hora,
+                "campo": campo_lineas,
+                "es_descanso": es_descanso,
+            }
+            previo = index.get(clave)
+            # Preferir partido real (no descanso) y con hora.
+            if previo is None:
+                index[clave] = registro
+            else:
+                mejor = (not es_descanso, bool(hora))
+                mejor_previo = (not previo["es_descanso"], bool(previo["hora"]))
+                if mejor > mejor_previo:
+                    index[clave] = registro
+    return index
+
+
+def _reparar_descansa(calendario, local, visitante, inicio, tiene_hora, pabellon, direccion):
+    """Si uno de los equipos es 'DESCANSA' y el otro es un equipo con ranura
+    en el CALENDARIO que ese día tiene rival real, sustituye los datos por los
+    del partido real (rival, hora y campo)."""
+    hay_descansa = "descansa" in _normaliza(local) or "descansa" in _normaliza(visitante)
+    if not hay_descansa or inicio is None:
+        return local, visitante, inicio, tiene_hora, pabellon, direccion
+
+    equipo_real = visitante if "descansa" in _normaliza(local) else local
+    fecha_txt = inicio.strftime("%d/%m/%Y")
+    reg = calendario.get((_normaliza(equipo_real), fecha_txt))
+    if reg is None or reg["es_descanso"]:
+        # No hay partido real ese día: es un descanso de verdad.
+        return local, visitante, inicio, tiene_hora, pabellon, direccion
+
+    # Reconstruir desde el calendario (que trae rival y hora correctos).
+    nuevo_local = reg["local"]
+    nuevo_visitante = reg["visitante"]
+    nueva_fecha, nueva_tiene_hora = _parse_fecha(f"{reg['fecha']} {reg['hora']}".strip())
+    if nueva_fecha is None:
+        nueva_fecha, nueva_tiene_hora = inicio, tiene_hora
+    campo = reg["campo"]
+    nuevo_pabellon = campo[0] if campo else pabellon
+    nueva_direccion = " ".join(campo[1:]) if len(campo) > 1 else direccion
+    return nuevo_local, nuevo_visitante, nueva_fecha, nueva_tiene_hora, nuevo_pabellon, nueva_direccion
 
 
 def filtrar(partidos: list[Partido], equipo: Equipo) -> list[Partido]:
