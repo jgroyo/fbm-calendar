@@ -361,6 +361,12 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
 
 def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     titulo = ajustes.get("titulo_sitio", "Calendarios de baloncesto FBM")
+    # Temporada global (a partir de todos los partidos) para mostrarla en el
+    # título del sitio.
+    todos_partidos = [p for eq in equipos for p in eq.partidos]
+    temporada_sitio = _temporada(todos_partidos)
+    if temporada_sitio:
+        titulo = f"{titulo} · Temporada {temporada_sitio}"
     base = base_url.rstrip("/")
     filas = []
     for eq in equipos:
@@ -382,9 +388,11 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
         else:
             botones = f'<a class="btn" href="{eq.id}.ics">Descargar .ics</a>'
             url_txt = f'<code>{eq.id}.ics</code>'
+        temporada_eq = _temporada(eq.partidos)
+        nombre_eq = f"{eq.nombre} {temporada_eq}".strip() if temporada_eq else eq.nombre
         filas.append(f"""
         <div class="card">
-          <h2>{html_mod.escape(eq.nombre)}</h2>
+          <h2>{html_mod.escape(nombre_eq)}</h2>
           <p class="meta">{n_con_fecha} partido(s) programado(s)</p>
           <div class="acciones">{botones}</div>
           <p class="url">{url_txt}</p>
