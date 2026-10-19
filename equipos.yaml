@@ -31,22 +31,146 @@ clubes:
     nombre_fbm: "PATROCINIO SAN JOSE"
 
 # Equipos a seguir. Cada uno genera su propio fichero .ics.
-equipos:
-  - id: cadete-fem-1
-    nombre: "Cadete Femenino 1º año"
-    club: patrocinio-san-jose
-    categoria: "cadete fem. 1"
-    equipo_contiene: ""
 
-  - id: alevin-masc-1-negro
+equipos:
+  - id: alevin-femenino-1o-ano
+    nombre: "Alevín Femenino 1º año"
+    club: patrocinio-san-jose
+    categoria: "alv fem 1ºaño liga marco aldany"
+
+  - id: alevin-femenino-2o-ano
+    nombre: "Alevín Femenino 2º año"
+    club: patrocinio-san-jose
+    categoria: "alv fem 2ºaño liga marco aldany"
+
+  - id: alevin-masculino-1o-ano-verde
+    nombre: "Alevín Masculino 1º año (Verde)"
+    club: patrocinio-san-jose
+    categoria: "alv mas 1ºaño liga marco aldany"
+    equipo_contiene: "VERDE"
+
+  - id: alevin-masculino-1o-ano-negro
     nombre: "Alevín Masculino 1º año (Negro)"
     club: patrocinio-san-jose
-    categoria: "alv mas 1"
+    categoria: "alv mas 1ºaño liga marco aldany"
     equipo_contiene: "NEGRO"
+
+  - id: alevin-masculino-2o-ano
+    nombre: "Alevín Masculino 2º año"
+    club: patrocinio-san-jose
+    categoria: "alv mas 2ºaño liga marco aldany"
+
+  - id: benjamin-femenino-1o-ano
+    nombre: "Benjamín Femenino 1º año"
+    club: patrocinio-san-jose
+    categoria: "benj f.1ºaño liga marco aldany"
+
+  - id: benjamin-femenino-2o-ano
+    nombre: "Benjamín Femenino 2º año"
+    club: patrocinio-san-jose
+    categoria: "benj f.2ºaño liga marco aldany"
+
+  - id: benjamin-masculino-1o-ano
+    nombre: "Benjamín Masculino 1º año"
+    club: patrocinio-san-jose
+    categoria: "benj mas 1ºaño liga marco aldany"
+
+  - id: benjamin-masculino-2o-ano
+    nombre: "Benjamín Masculino 2º año"
+    club: patrocinio-san-jose
+    categoria: "benj mas 2ºaño liga marco aldany"
+
+  - id: cadete-femenino-1o-ano
+    nombre: "Cadete Femenino 1º año"
+    club: patrocinio-san-jose
+    categoria: "cadete fem. 1ºaño"
+
+  - id: cadete-femenino-preferente
+    nombre: "Cadete Femenino Preferente"
+    club: patrocinio-san-jose
+    categoria: "cadete fem. pref."
+
+  - id: cadete-masculino-1o-ano-bta-tetuan-negro
+    nombre: "Cadete Masculino 1º año (Bta Tetuán Negro)"
+    club: patrocinio-san-jose
+    categoria: "cadete masc. 1ºaño"
+    equipo_contiene: "BTA TETUÁN NEGRO"
+
+  - id: cadete-masculino-preferente-verde
+    nombre: "Cadete Masculino Preferente (Verde)"
+    club: patrocinio-san-jose
+    categoria: "cadete masc. pref."
+    equipo_contiene: "VERDE"
+
+  - id: cadete-masculino-bta-tetuan
+    nombre: "Cadete Masculino (Bta Tetuán)"
+    club: patrocinio-san-jose
+    categoria: "cadete masculino liga ahorramas"
+    equipo_contiene: "BTA TETUÁN"
+
+  - id: infantil-femenino-1o-ano
+    nombre: "Infantil Femenino 1º año"
+    club: patrocinio-san-jose
+    categoria: "infantil fem. 1ºaño"
+
+  - id: infantil-masculino-1o-ano-negro
+    nombre: "Infantil Masculino 1º año (Negro)"
+    club: patrocinio-san-jose
+    categoria: "infantil masc. 1ºaño"
+    equipo_contiene: "NEGRO"
+
+  - id: infantil-masculino-1o-ano-verde
+    nombre: "Infantil Masculino 1º año (Verde)"
+    club: patrocinio-san-jose
+    categoria: "infantil masc. 1ºaño"
+    equipo_contiene: "VERDE"
+
+  - id: infantil-masculino-preferente
+    nombre: "Infantil Masculino Preferente"
+    club: patrocinio-san-jose
+    categoria: "infantil masc. pref."
+
+  - id: infantil-masculino-bta-tetuan
+    nombre: "Infantil Masculino (Bta Tetuán)"
+    club: patrocinio-san-jose
+    categoria: "infantil masculino liga ahorramas"
+    equipo_contiene: "BTA TETUÁN"
+
+  - id: junior-masculino-1o-ano
+    nombre: "Junior Masculino 1º año"
+    club: patrocinio-san-jose
+    categoria: "junior masc. 1ºaño"
+
+  - id: junior-masculino-preferente
+    nombre: "Junior Masculino Preferente"
+    club: patrocinio-san-jose
+    categoria: "junior masc. pref."
+
+  - id: junior-masculino-bta-tetuan
+    nombre: "Junior Masculino (Bta Tetuán)"
+    club: patrocinio-san-jose
+    categoria: "junior masculino liga ahorramas"
+    equipo_contiene: "BTA TETUÁN"
+
+  - id: liga-ginos-masculina-plata-bta-tetuan
+    nombre: "Liga Ginos Masculina PLATA (Bta Tetuán)"
+    club: patrocinio-san-jose
+    categoria: "liga ginos masculina plata"
+    equipo_contiene: "BTA TETUÁN"
+
+  - id: sub-22-femenina
+    nombre: "Sub 22 Femenina"
+    club: patrocinio-san-jose
+    categoria: "sub 22 femenina"
+
+  - id: sub-22-masc-bronce
+    nombre: "Sub 22 Masc. BRONCE"
+    club: patrocinio-san-jose
+    categoria: "sub 22 masc. bronce"
 
 # Ajustes generales del calendario.
 ajustes:
   duracion_minutos: 90       # duración de cada partido (para la hora de fin)
   tzid: "Europe/Madrid"
   aviso_horas_antes: 2       # recordatorio antes del partido (0 = sin aviso)
-  titulo_sitio: "Calendarios de baloncesto FBM"
+  titulo_sitio: "Calendarios Patrocinio San José (FBM)"
