@@ -1,5 +1,8 @@
 # Calendarios FBM → iCal (multi-equipo)
 
+> 🌐 **Web generada por este repo: <https://jgroyo.github.io/fbm-calendar/>**
+> Entra, elige tu equipo y suscríbete a su calendario.
+
 Genera un archivo `.ics` por equipo a partir de la web de la
 [Federación de Baloncesto de Madrid](https://www.fbm.es), y los publica en
 **GitHub Pages**. Cada familia se suscribe al calendario de su equipo desde
