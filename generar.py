@@ -324,8 +324,14 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
     lineas = [
         "BEGIN:VCALENDAR", "VERSION:2.0",
         "PRODID:-//fbm-calendar//ES", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+        # NAME (RFC 7986) lo respetan los clientes modernos (incluido Google al
+        # suscribir por URL); X-WR-CALNAME se mantiene por compatibilidad.
+        f"NAME:{_escapar(nombre_cal)}",
         f"X-WR-CALNAME:{_escapar(nombre_cal)}",
         f"X-WR-TIMEZONE:{tzid}",
+        # Sugerir a los clientes que refresquen el calendario cada 12 horas.
+        "REFRESH-INTERVAL;VALUE=DURATION:PT12H",
+        "X-PUBLISHED-TTL:PT12H",
         *_vtimezone(tzid),
     ]
     for p in equipo.partidos:
