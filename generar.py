@@ -486,6 +486,8 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
   .fuente a {{ color: var(--brand); word-break: break-all; }}
   .fuente ul {{ margin: .4rem 0 0; padding-left: 1.1rem; }}
   .fuente-club {{ color: #888; }}
+  .seccion {{ margin: 1.5rem 0 .25rem; font-size: 1.2rem; color: var(--dark);
+             border-bottom: 2px solid var(--brand); padding-bottom: .3rem; }}
 </style>
 </head>
 <body>
@@ -495,8 +497,6 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
     <p class="sub">{html_mod.escape(subtitulo)}</p>
   </header>
   <div class="wrap">
-
-  {''.join(filas)}
 
   <div class="ayuda">
     <strong>¿Cómo suscribirse?</strong>
@@ -513,13 +513,16 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
     <strong>Importante:</strong> usa «suscribirse por URL», no «importar». Así el
     calendario <em>se actualiza solo</em>: si un partido cambia de día, hora o
     pabellón, tu calendario lo refleja automáticamente (Google puede tardar unas
-    horas en refrescar).
+    horas en refrescar). ¿Dudas? Lee la
+    <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía completa</a>.
   </div>
 
   {fuente_html}
 
-  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}<br>
-  ¿Dudas? Lee la <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía para suscribirse</a>.</footer>
+  <h2 class="seccion">Elige tu equipo</h2>
+  {''.join(filas)}
+
+  <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}</footer>
   </div>
 
   <script>
