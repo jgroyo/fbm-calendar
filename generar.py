@@ -24,6 +24,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from urllib.parse import quote
 
 import requests
 import yaml
@@ -353,9 +354,13 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
         if base:
             https_url = f"{base}/{eq.id}.ics"
             webcal_url = re.sub(r"^https?://", "webcal://", https_url)
+            # Enlace oficial de Google para suscribirse por URL (no importar):
+            # abre el diálogo "Añadir calendario desde URL".
+            google_url = "https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=" + quote(https_url, safe="")
             botones = (
-                f'<a class="btn" href="{html_mod.escape(webcal_url)}">📅 Suscribirse</a>'
-                f'<a class="btn ghost" href="{html_mod.escape(https_url)}">Copiar URL (https)</a>'
+                f'<a class="btn" href="{html_mod.escape(google_url)}" target="_blank" rel="noopener">Añadir a Google Calendar</a>'
+                f'<a class="btn apple" href="{html_mod.escape(webcal_url)}">Añadir a Apple / iPhone</a>'
+                f'<button class="btn ghost" type="button" data-url="{html_mod.escape(https_url)}" onclick="copiarUrl(this)">Copiar URL</button>'
             )
             url_txt = f'<code>{html_mod.escape(https_url)}</code>'
         else:
@@ -377,23 +382,29 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html_mod.escape(titulo)}</title>
 <style>
-  :root {{ color-scheme: light dark; }}
   body {{ font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-         max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }}
+         max-width: 760px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;
+         background: #ffffff; color: #1a1a1a; }}
   h1 {{ font-size: 1.6rem; }}
-  .sub {{ color: #666; margin-top: -0.5rem; }}
-  .card {{ border: 1px solid #ddd; border-radius: 12px; padding: 1rem 1.25rem;
-          margin: 1rem 0; box-shadow: 0 1px 3px rgba(0,0,0,.05); }}
-  .card h2 {{ margin: 0 0 .25rem; font-size: 1.15rem; }}
-  .meta {{ color: #888; margin: 0 0 .75rem; font-size: .9rem; }}
-  .acciones {{ display: flex; gap: .5rem; flex-wrap: wrap; }}
+  .sub {{ color: #555; margin-top: -0.5rem; }}
+  .card {{ border: 1px solid #e0e0e0; border-radius: 12px; padding: 1rem 1.25rem;
+          margin: 1rem 0; box-shadow: 0 1px 3px rgba(0,0,0,.06); background: #fff; }}
+  .card h2 {{ margin: 0 0 .25rem; font-size: 1.15rem; color: #1a1a1a; }}
+  .meta {{ color: #666; margin: 0 0 .75rem; font-size: .9rem; }}
+  .acciones {{ display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }}
   .btn {{ display: inline-block; background: #c4242f; color: #fff;
          text-decoration: none; padding: .5rem .9rem; border-radius: 8px;
-         font-size: .95rem; }}
-  .btn.ghost {{ background: transparent; color: #c4242f; border: 1px solid #c4242f; }}
-  .url {{ font-size: .8rem; color: #888; word-break: break-all; margin: .6rem 0 0; }}
-  footer {{ margin-top: 2rem; color: #999; font-size: .85rem; }}
-  .ayuda {{ background: #f6f6f6; border-radius: 10px; padding: 1rem; font-size: .9rem; }}
+         font-size: .95rem; border: none; cursor: pointer; font-family: inherit; }}
+  .btn.apple {{ background: #0a84ff; }}
+  .btn.ghost {{ background: #fff; color: #c4242f; border: 1px solid #c4242f; }}
+  .btn.ghost.ok {{ color: #1a7f37; border-color: #1a7f37; }}
+  .url {{ font-size: .8rem; color: #666; word-break: break-all; margin: .6rem 0 0; }}
+  .url code {{ background: #f2f2f2; padding: .15rem .35rem; border-radius: 4px; }}
+  footer {{ margin-top: 2rem; color: #777; font-size: .85rem; }}
+  .ayuda {{ background: #f4f6f8; border: 1px solid #e0e4e8; border-radius: 10px;
+           padding: 1rem 1.25rem; font-size: .92rem; color: #1a1a1a; }}
+  .ayuda strong {{ color: #111; }}
+  .ayuda code {{ background: #e7ebef; padding: .1rem .3rem; border-radius: 4px; }}
 </style>
 </head>
 <body>
@@ -405,15 +416,39 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
   <div class="ayuda">
     <strong>¿Cómo suscribirse?</strong>
     <ul>
-      <li><strong>iPhone / iPad / Mac:</strong> pulsa “Suscribirse” (enlace <code>webcal://</code>) y confirma.</li>
-      <li><strong>Google Calendar:</strong> copia la URL <code>https</code> y ve a
+      <li><strong>Google Calendar</strong> (ordenador): pulsa «Añadir a Google
+          Calendar». Se abrirá Google pidiendo confirmar la suscripción <em>desde
+          URL</em>. Si no se abriera el diálogo, usa «Copiar URL» y pégala en
           <em>Otros calendarios → Suscribirse a un calendario → Desde una URL</em>.</li>
+      <li><strong>iPhone / iPad / Mac:</strong> pulsa «Añadir a Apple / iPhone»
+          (enlace <code>webcal://</code>) y confirma.</li>
+      <li><strong>Android:</strong> suscríbete primero en Google Calendar desde un
+          ordenador; el calendario aparecerá luego en la app del móvil.</li>
     </ul>
-    El calendario se actualiza solo: si un partido cambia de día u hora, tu
-    calendario lo refleja automáticamente (puede tardar unas horas en Google).
+    <strong>Importante:</strong> usa «suscribirse por URL», no «importar». Así el
+    calendario <em>se actualiza solo</em>: si un partido cambia de día, hora o
+    pabellón, tu calendario lo refleja automáticamente (Google puede tardar unas
+    horas en refrescar).
   </div>
 
   <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es.</footer>
+
+  <script>
+  function copiarUrl(btn) {{
+    const url = btn.getAttribute('data-url');
+    const previo = btn.textContent;
+    const hecho = () => {{
+      btn.textContent = '¡URL copiada!';
+      btn.classList.add('ok');
+      setTimeout(() => {{ btn.textContent = previo; btn.classList.remove('ok'); }}, 2000);
+    }};
+    if (navigator.clipboard && navigator.clipboard.writeText) {{
+      navigator.clipboard.writeText(url).then(hecho).catch(() => prompt('Copia la URL:', url));
+    }} else {{
+      prompt('Copia la URL:', url);
+    }}
+  }}
+  </script>
 </body>
 </html>
 """
