@@ -24,6 +24,11 @@ clubes:
     id: 6341
     slug: patrocinio-san-jose-cb
     nombre: Patrocinio San José C.B.
+    # Texto con el que aparece el club en la web de la FBM (sin acentos ni
+    # mayúsculas importa). Se usa para quedarse solo con SUS partidos dentro
+    # del grupo. Si el club tiene equipos con sufijo de color, NO lo incluyas
+    # aquí (el color va en cada equipo con "equipo_contiene").
+    nombre_fbm: "PATROCINIO SAN JOSE"
 
 # Equipos a seguir. Cada uno genera su propio fichero .ics.
 equipos:

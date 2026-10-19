@@ -13,8 +13,10 @@ ordenador encendido.
 ## Cómo funciona
 
 1. Una acción programada (cada 6 h) raspa la página de cada club en la FBM.
-2. `generar.py` filtra los partidos de los equipos definidos en `equipos.yaml`
-   y escribe un `.ics` por equipo + un `index.html` con los enlaces.
+2. `generar.py` lee la sección **CALENDARIO** de la web (la fuente completa y
+   fiable: toda la liga del equipo, con aplazados y partidos entre semana),
+   filtra los partidos de los equipos definidos en `equipos.yaml` y escribe un
+   `.ics` por equipo + un `index.html` con los enlaces.
 3. El resultado se publica en GitHub Pages: `https://<usuario>.github.io/<repo>/`.
 
 ## Archivos
@@ -48,6 +50,8 @@ clubes:
     id: 1234
     slug: otro-club-cb
     nombre: Otro Club C.B.
+    nombre_fbm: "OTRO CLUB"   # cómo aparece el club en la web FBM (para
+                              # quedarse solo con SUS partidos del grupo)
 ```
 
 Al hacer `git push`, la acción se ejecuta sola y actualiza los calendarios.
