@@ -367,7 +367,8 @@ def generar_ics(equipo: Equipo, ajustes: dict) -> str:
 # INDEX HTML
 # --------------------------------------------------------------------------- #
 
-def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
+def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str,
+                  fuentes: list[tuple[str, str]] | None = None) -> str:
     titulo = ajustes.get("titulo_sitio", "Calendarios de baloncesto FBM")
     color = ajustes.get("color_principal", "#c4242f")
     color_oscuro = ajustes.get("color_oscuro", "#111111")
@@ -419,6 +420,23 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
         f'· <a href="{html_mod.escape(club_web)}">Web del club</a>' if club_web else ""
     )
 
+    # Bloque "Fuente de los datos" con las URLs exactas de la FBM.
+    if fuentes:
+        enlaces = "".join(
+            f'<li><a href="{html_mod.escape(u)}" target="_blank" rel="noopener">{html_mod.escape(u)}</a>'
+            f' <span class="fuente-club">({html_mod.escape(n)})</span></li>'
+            for n, u in fuentes
+        )
+        fuente_html = (
+            '<div class="fuente">'
+            '<strong>Fuente de los datos</strong>'
+            '<p>Los partidos se obtienen automáticamente de la sección '
+            '<em>Calendario</em> de la Federación de Baloncesto de Madrid:</p>'
+            f'<ul>{enlaces}</ul></div>'
+        )
+    else:
+        fuente_html = ""
+
     actualizado = datetime.now().strftime("%d/%m/%Y %H:%M")
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -463,6 +481,11 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
   .ayuda strong {{ color: var(--dark); }}
   .ayuda a {{ color: var(--brand); }}
   .ayuda code {{ background: #eef1ee; padding: .1rem .3rem; border-radius: 4px; }}
+  .fuente {{ margin-top: 1rem; font-size: .85rem; color: #555; }}
+  .fuente strong {{ color: var(--dark); }}
+  .fuente a {{ color: var(--brand); word-break: break-all; }}
+  .fuente ul {{ margin: .4rem 0 0; padding-left: 1.1rem; }}
+  .fuente-club {{ color: #888; }}
 </style>
 </head>
 <body>
@@ -492,6 +515,8 @@ def generar_index(equipos: list[Equipo], ajustes: dict, base_url: str) -> str:
     pabellón, tu calendario lo refleja automáticamente (Google puede tardar unas
     horas en refrescar).
   </div>
+
+  {fuente_html}
 
   <footer>Actualizado por última vez: {actualizado}. Generado automáticamente desde fbm.es {club_link}<br>
   ¿Dudas? Lee la <a href="https://github.com/jgroyo/fbm-calendar/blob/main/COMO-SUSCRIBIRSE.md">guía para suscribirse</a>.</footer>
@@ -614,7 +639,15 @@ def main() -> int:
 
     # index.html (solo con los equipos que se pudieron generar).
     equipos_ok = [e for e in equipos if e.club in cache_html]
-    index = generar_index(equipos_ok, ajustes, args.base_url)
+    # URLs de la FBM usadas como fuente (una por club cargado), para mostrarlas.
+    fuentes = []
+    for clave_club in sorted(cache_html.keys()):
+        club = clubes.get(clave_club, {})
+        if club:
+            fuentes.append(
+                (club.get("nombre", clave_club), FBM_URL.format(id=club["id"], slug=club["slug"]))
+            )
+    index = generar_index(equipos_ok, ajustes, args.base_url, fuentes)
     with open(os.path.join(args.salida, "index.html"), "w", encoding="utf-8") as f:
         f.write(index)
     print(f"OK index.html -> {os.path.join(args.salida, 'index.html')}")

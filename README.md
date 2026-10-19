@@ -10,6 +10,19 @@ gracias a identificadores de evento estables).
 Todo corre en **GitHub Actions**: no necesitas ningún servidor ni dejar tu
 ordenador encendido.
 
+## Fuente de los datos
+
+Los partidos se obtienen automáticamente de la página del club en la
+Federación de Baloncesto de Madrid, concretamente de su sección **Calendario**:
+
+- Patrocinio San José C.B.:
+  <https://www.fbm.es/resultados-club-6341/patrocinio-san-jose-cb>
+
+La URL se compone a partir del ID y el slug del club definidos en `equipos.yaml`
+(`https://www.fbm.es/resultados-club-<id>/<slug>`). Esa única página contiene el
+calendario completo de **todos** los equipos del club, por eso una sola descarga
+genera todos los calendarios.
+
 ## Cómo funciona
 
 1. Una acción programada (cada hora) raspa la página de cada club en la FBM.
